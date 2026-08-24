@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#Local test data
+data_test_transcript.txt
+map_summaries.json
