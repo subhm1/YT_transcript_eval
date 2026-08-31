@@ -2,15 +2,14 @@
 
 This file records the important decisions, failed approaches, debugging discoveries, and trade-offs I made while building this project.
 
-I am keeping this in first person because I want the repository to show how I actually built and debugged the system, not just what the final architecture looks like.
 
 ---
 
-## 1. I started with a simple transcript processing pipeline
+## 1. I started with a simple transcript processing pipeline:
 
 At first, I wanted to keep the project simple and understand every stage myself instead of using a framework like LangChain.
 
-I decided to build the pipeline explicitly:
+Decided to build the pipeline explicitly:
 
 YouTube URL
 → transcript fetching
@@ -25,11 +24,11 @@ The goal was to understand what happens inside a summarization pipeline rather t
 
 ---
 
-## 2. I separated the pipeline into small modules
+## 2. Separated the pipeline into small modules:
 
-I initially considered keeping everything in one script, but that would make it difficult to test and debug individual stages.
+Initially considered keeping everything in one script, but that would make it difficult to test and debug individual stages.
 
-I separated the project into modules such as:
+So separated the project into modules such as:
 
 - `fetcher.py`
 - `tokenizer.py`
@@ -43,11 +42,11 @@ This made it possible to test individual stages independently and also made fail
 
 ---
 
-## 3. I chose explicit map-reduce summarization
+## 3. I chose explicit map-reduce summarization:
 
 Long transcripts cannot always be sent to an LLM in one call.
 
-I therefore implemented:
+Therefore implemented:
 
 1. Split the transcript into chunks.
 2. Summarize every chunk independently.
@@ -66,11 +65,11 @@ This also gave me useful metrics such as:
 
 ---
 
-## 4. I initially used Gemini for map summarization
+## 4. Initially used Gemini for map summarization but ;(
 
-I used Gemini for the map stage because I wanted to use a real LLM API for the summarization process.
+Used Gemini for the map stage because I wanted to use a real LLM API for the summarization process.
 
-The implementation worked, but I discovered an important problem during testing.
+The implementation worked, but found an imp problem during testing.
 
 While running `test_map.py`, Gemini returned:
 
@@ -78,21 +77,17 @@ While running `test_map.py`, Gemini returned:
 
 The error message said that the model was experiencing high demand.
 
-The interesting part was that the failure happened after several successful calls. The pipeline successfully processed the first few chunks and then failed on a later request.
+The interesting part was that the failure happened after several successful calls. The pipeline successfully processed the first few chunks and then failed on a later request.This showed me that an external API can fail even when my code is correct.
 
-This showed me that an external API can fail even when my code is correct.
-
-I therefore do not consider an API failure to automatically mean that the pipeline implementation is broken.
+Therefore I do not consider an API failure to automatically mean that the pipeline implementation is broken.
 
 ---
 
-## 5. I moved the reducer to local Ollama
+## 5. Moved the reducer to local Ollama:
 
-For the reduce stage, I used Ollama locally with:
+For the reduce stage, used Ollama locally with:
 
 `qwen3:4b`
-
-I wanted to avoid depending completely on external APIs for the final aggregation step.
 
 The reducer accepts the individual map summaries and asks the local model to produce structured JSON.
 
@@ -108,7 +103,7 @@ The expected structure is:
 }
 ```
 
-I also added validation after the model response.
+Also added validation after the model response.
 
 The reducer checks:
 
@@ -123,21 +118,19 @@ This was deliberate because I did not want to blindly trust an LLM response.
 
 ---
 
-## 6. I discovered that structured output still needs validation
+## 6. Found that structured output still needs validation
 
 The reducer was instructed to return JSON, and Ollama was also given a JSON schema.
 
-I still added explicit validation in Python.
+Still added explicit validation in Python.
 
-My reasoning was that the model output is external data from the perspective of my application.
-
-Even if I constrain the model, my application should verify the result before using it.
+Bcz I thought the model output is external data from the perspective of my application and it should verify the result before using it.
 
 This made the reducer more deterministic and easier to debug.
 
 ---
 
-## 7. I found a formatting problem in the reducer output
+## 7. Found a formatting problem in the reducer output
 
 During an end-to-end run, the reducer returned bullets that already started with `-`.
 
@@ -149,13 +142,13 @@ This produced output like:
 
 The model itself was technically returning valid JSON, so the problem was in my application-level formatting.
 
-I fixed the reducer so that it strips the bullet formatting before adding the final bullet prefix.
+Fixed the reducer so that it strips the bullet formatting before adding the final bullet prefix.
 
 This was a useful reminder that valid model output does not necessarily mean valid application output.
 
 ---
 
-## 8. I tested the reducer independently before trusting the whole pipeline
+## 8. Tested the reducer independently before trusting the whole pipeline:
 
 I created a small manual reducer test using simple summaries such as:
 
@@ -166,11 +159,11 @@ The reducer returned valid JSON and the Python validation passed.
 
 This gave me a cheap way to test reducer behavior without running the entire YouTube pipeline.
 
-I also created `test_reducer_manual.py` for a more realistic manual reducer test using several sections.
+Created `test_reducer_manual.py` for a more realistic manual reducer test using several sections.
 
 ---
 
-## 9. I deliberately tested a real YouTube video
+## 9. Deliberately tested a real YouTube video (Benchmarked)
 
 After the individual stages were working, I tested the complete pipeline using a real YouTube video.
 
@@ -195,19 +188,15 @@ This confirmed that the individual components were actually connected into a wor
 
 ---
 
-## 10. I tested a video outside the evaluation benchmark
+## 10. Testing the video outside the evaluation benchmark :
 
-I did not want the application to assume that every video was part of the benchmark dataset.
-
-I tested it with a non-benchmark YouTube video.
-
-The pipeline successfully generated a summary and completed normally.
+I tested it with a non-benchmark YouTube video. The pipeline successfully generated a summary and completed normally.
 
 The evaluation panel correctly reported:
 
 `This video is not part of the evaluation benchmark.`
 
-I decided that this is the correct behavior.
+This was kinda CORRECT behavior.
 
 Summarization and evaluation are separate concerns:
 
@@ -216,7 +205,7 @@ Summarization and evaluation are separate concerns:
 
 ---
 
-## 11. I added an evaluation layer instead of pretending every summary has a score
+## 11. added an evaluation layer instead of pretending every summary has a score
 
 The project is not only a summarizer.
 
@@ -230,7 +219,7 @@ This is why the frontend can show the generated summary while explicitly saying 
 
 ---
 
-## 12. I initially had an import problem in the evaluation test
+## 12. Initially had an import problem in the evaluation test
 
 When I ran the complete pytest suite, collection failed with:
 
@@ -256,7 +245,7 @@ After understanding the issue, I restored the file because I did not want to mak
 
 ---
 
-## 13. I discovered that some of my test files were not actually pytest tests
+## 13. Found that some of my test files were not actually pytest tests:
 
 When I ran:
 
@@ -289,9 +278,7 @@ For pytest to collect tests, I need actual pytest-compatible test functions or c
 
 ---
 
-## 14. I discovered that some old test files execute real API calls during collection
-
-I ran:
+## 14. Discovered that some old test files execute real API calls during collection
 
 ```powershell
 python -m pytest test_fetcher.py test_map.py test_ollama.py test_pipeline.py test_reduce.py test_reducer.py test_tokenizer.py test_transcript.py -v
@@ -318,21 +305,7 @@ The current repository still contains some scripts that behave more like manual 
 
 ---
 
-## 15. I installed pytest into the project environment
-
-Initially:
-
-```powershell
-python -m pytest
-```
-
-failed because pytest was not installed.
-
-I installed pytest into the virtual environment and verified that pytest itself worked.
-
-The remaining test issues were therefore test-structure and external-service issues rather than pytest installation issues.
-
----
+## 15. I installed pytest into the project environment.
 
 ## 16. I verified the frontend independently
 
@@ -403,43 +376,9 @@ This prevents the application from confusing "I generated a summary" with "I mea
 
 ---
 
-## 19. I checked Git before considering the project complete
+## 19. Pushed the complete pipeline to GitHub
 
-Before the final push I checked:
-
-```powershell
-git status
-git log --oneline -3
-git ls-files
-```
-
-The working tree was clean.
-
-The latest commit was:
-
-`d246684 Finished end-to-end transcript evaluation pipeline`
-
-The previous commits included the local Ollama summarization pipeline and the earlier map-reduce implementation.
-
-This gave me a clean project history showing the progression of the system.
-
----
-
-## 20. I pushed the complete pipeline to GitHub
-
-I pushed the completed work using:
-
-```powershell
-git push origin main
-```
-
-The push succeeded.
-
-The remote repository is therefore up to date with the current implementation.
-
----
-
-## 21. I decided that production cleanup is separate from making the pipeline work
+## 20. I decided that production cleanup is separate from making the pipeline work
 
 At this point, the main engineering goal has been achieved:
 
@@ -447,22 +386,9 @@ The system can fetch a transcript, process it, summarize it through map-reduce, 
 
 I do not want to endlessly modify working code just to make it look cleaner.
 
-The next phase should therefore be cleanup and hardening rather than adding random features.
-
-The cleanup should focus on:
-
-- converting manual scripts into proper tests where useful
-- separating unit tests from API/integration tests
-- improving error handling
-- checking configuration and secrets
-- removing unnecessary generated files
-- improving README documentation
-- documenting architectural decisions
-- verifying the final repository structure
-
 ---
 
-## 22. I learned that "working" and "production-ready" are different
+## 21. I learned that "working" and "production-ready" are different
 
 The pipeline working end-to-end does not automatically make it production-ready.
 
@@ -487,7 +413,7 @@ I therefore consider the current project an end-to-end working system that still
 
 ---
 
-## 23. My main failure modes so far
+## 22. My main failure modes so far
 
 The most important failures I encountered were:
 
@@ -537,34 +463,7 @@ A non-benchmark video initially appeared as an evaluation case, but the correct 
 
 ---
 
-## 24. The biggest architectural lesson so far
-
-The biggest lesson from this project is that an LLM application is not just:
-
-`prompt → model → answer`
-
-The actual system is:
-
-`input`
-→ `validation`
-→ `data acquisition`
-→ `normalization`
-→ `token accounting`
-→ `chunking`
-→ `LLM calls`
-→ `structured output validation`
-→ `aggregation`
-→ `evaluation`
-→ `observability`
-→ `UI`
-
-Most of the engineering difficulty exists around the model rather than inside the model itself.
-
-That is the part I wanted this project to demonstrate.
-
----
-
-## 25. Current state
+## 23. Current state
 
 The current project has:
 
@@ -588,5 +487,3 @@ The current project has:
 - GitHub repository with a clean working tree
 
 The core end-to-end pipeline is working.
-
-The remaining work is primarily engineering cleanup, testing improvements, documentation, and production hardening.
