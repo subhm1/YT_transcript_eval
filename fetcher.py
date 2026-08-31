@@ -31,12 +31,16 @@ def fetch_transcript(video_id: str, languages=None):
     ytt_api = YouTubeTranscriptApi()
 
     try:
+        transcript_list = ytt_api.list(video_id)
+
         if languages:
-            return ytt_api.fetch(video_id, languages=languages)
+            transcript = transcript_list.find_transcript(languages)
+        else:
+            transcript = transcript_list.find_transcript(["en"])
 
-        return ytt_api.fetch(video_id)
+        return transcript.fetch()
 
-    except CouldNotRetrieveTranscript as exc:
+    except Exception as exc:
         raise TranscriptFetchError(
             f"Could not retrieve transcript for video: {video_id}"
         ) from exc

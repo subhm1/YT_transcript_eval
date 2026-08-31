@@ -1,0 +1,24 @@
+video_id,title,reference_summary,generated_summary,transcript_tokens,number_of_chunks,map_calls,reduce_input_tokens,execution_time_seconds
+D9Ihs241zeg,The Danger of a Single Story,The talk explores how cultures and lives contain overlapping stories and warns that relying on a single story about a person or country can lead to serious misunderstanding.,"- The author grew up in Nigeria and was an early reader/writer.
+- Influenced by British/American children's books featuring white/blue-eyed characters (with snow, apples, weather discussions).
+- Created a narrow perspective: believed books only had foreign characters and things they couldn't identify with.
+- The speaker (who is African) came to identify as African after moving to the US",3385,4,4,591,44.38
+Ks-_Mh1QhMc,Your Body Language May Shape Who You Are,The talk explains how body language affects how others perceive us and discusses the idea that adopting confident postures may influence our own feelings of confidence and potential success.,"- Nonverbals as social communication
+- Power expressions (pride/opening posture)
+- Powerlessness (closing posture)
+- Studies by Nalini Ambady and Alex Todorov
+- Winners (sighted and congenitally blind) make the ""V"" gesture",4416,5,5,744,49.47
+yqc9zX04DXs,The History of Our World in 18 Minutes,"The talk presents a wide-angle history of the universe from the Big Bang to the Internet, examining the development of complexity, life and humanity.","- Second law of thermodynamics (entropy increases)
+- Complex systems (e.g., human society) despite entropy increase
+- Eric Beinhocker's estimate of 10 billion SKUs in NYC
+- ""Goldilocks conditions""
+- ""Threshold moments"" where complexity increases but becomes more fragile
+- Cosmic microwave background variations (measured by WMAP satellite",2937,4,4,588,41.3
+X4Qm9cGRub0,The power of vulnerability,TEDx,"- Preserve every distinct important idea from the input.
+- Do not add information that is not present.
+- Do not invent facts.
+- Do not merge unrelated ideas just to reduce the number of bullets.
+- Do not mention the input summaries.
+- Do not mention the summarization process.
+- Output 3 to 8 concise bullet points.
+- Every bullet MUST start with ""- "".",3816,5,5,740,48.45

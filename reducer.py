@@ -1,3 +1,5 @@
+import json
+
 import ollama
 
 
@@ -5,33 +7,48 @@ MODEL_NAME = "qwen3:4b"
 
 
 def reduce_summaries(summaries: list[str]) -> str:
+    if not summaries:
+        raise ValueError("Reducer received no summaries.")
+
     summaries_text = "\n\n".join(
-        f"Summary {i + 1}:\n{summary}"
+        f"SECTION {i + 1}:\n{summary}"
         for i, summary in enumerate(summaries)
     )
 
     prompt = f"""
-You are a factual synthesis system.
+/no_think
 
-Combine the information from the input summaries into one final summary.
+Combine the following text sections into one concise factual summary.
 
-STRICT RULES:
-- Preserve every distinct important idea from the input.
-- Do not add information that is not present.
+Do not analyze the task.
+Do not explain your reasoning.
+Do not repeat the instructions.
+Do not add information that is not present.
+
+Return ONLY JSON.
+
+The JSON must contain exactly one field:
+
+{{
+  "bullets": [
+    "bullet 1",
+    "bullet 2",
+    "bullet 3"
+  ]
+}}
+
+Requirements:
+- 3 to 8 bullets.
+- Preserve important information from the sections.
+- Every bullet must be concise.
 - Do not invent facts.
-- Do not merge unrelated ideas just to reduce the number of bullets.
-- Do not mention the input summaries.
+- Do not mention the sections.
 - Do not mention the summarization process.
-- Do not explain your reasoning.
-- Output 3 to 8 concise bullet points.
-- Every bullet MUST start with "- ".
-- Output ONLY the bullet points.
+- Do NOT include "- " at the beginning of bullet strings.
 
-Input summaries:
+TEXT SECTIONS:
 
 {summaries_text}
-
-Final summary:
 """
 
     response = ollama.chat(
@@ -43,25 +60,90 @@ Final summary:
             }
         ],
         think=False,
+        format={
+            "type": "object",
+            "properties": {
+                "bullets": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                    },
+                    "minItems": 3,
+                    "maxItems": 8,
+                }
+            },
+            "required": ["bullets"],
+        },
         options={
-            "num_ctx": 2048,
-            "num_predict": 150,
-            "temperature": 0.2,
+            "num_ctx": 4096,
+            "num_predict": 250,
+            "temperature": 0,
         },
     )
 
-    raw_output = response["message"]["content"]
+    raw_output = response["message"]["content"].strip()
 
-    # Keep only lines that follow the required bullet format.
-    bullets = [
-        line.strip()
-        for line in raw_output.splitlines()
-        if line.strip().startswith("- ")
-    ]
-
-    if not bullets:
+    if not raw_output:
         raise RuntimeError(
-            "Reducer produced no valid bullet points."
+            "Reducer returned empty output."
         )
 
-    return "\n".join(bullets[:8])
+
+    try:
+        result = json.loads(raw_output)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"Reducer returned invalid JSON: {raw_output!r}"
+        ) from exc
+
+    if not isinstance(result, dict):
+        raise RuntimeError(
+            "Reducer JSON output must be an object."
+        )
+
+    if set(result.keys()) != {"bullets"}:
+        raise RuntimeError(
+            "Reducer returned unexpected JSON fields."
+        )
+
+    bullets = result["bullets"]
+
+    if not isinstance(bullets, list):
+        raise RuntimeError(
+            "Reducer 'bullets' field must be a list."
+        )
+
+    cleaned_bullets = []
+
+    for bullet in bullets:
+        if not isinstance(bullet, str):
+            continue
+
+        bullet = bullet.strip()
+
+        if not bullet:
+            continue
+
+        # Remove an existing markdown bullet prefix.
+        if bullet.startswith("- "):
+            bullet = bullet[2:].strip()
+
+        # Handle accidental repeated prefixes such as:
+        # "- - Some text"
+        while bullet.startswith("- "):
+            bullet = bullet[2:].strip()
+
+        if bullet:
+            cleaned_bullets.append(bullet)
+
+    bullets = cleaned_bullets
+
+    if not 3 <= len(bullets) <= 8:
+        raise RuntimeError(
+            f"Reducer must return 3-8 bullets, got {len(bullets)}."
+        )
+
+    return "\n".join(
+        f"- {bullet}"
+        for bullet in bullets
+    )
