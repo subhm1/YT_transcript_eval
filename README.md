@@ -256,12 +256,12 @@ This project therefore includes a benchmark dataset and an LLM-as-a-judge evalua
 
 The current benchmark contains four videos covering different transcript characteristics.
 
-| Video                                                                                   | Reference          | Transcript Type | Length |
-| --------------------------------------------------------------------------------------- | ------------------ | --------------- | ------ |
-| [The Danger of a Single Story](https://www.youtube.com/watch?v=D9Ihs241zeg)             | TED                | Manual          | Medium |
-| [Your Body Language May Shape Who You Are](https://www.youtube.com/watch?v=Ks-_Mh1QhMc) | TED                | Manual          | Medium |
-| [The History of Our World in 18 Minutes](https://www.youtube.com/watch?v=yqc9zX04DXs)   | TED                | Manual          | Short  |
-| [The Power of Vulnerability](https://www.youtube.com/watch?v=X4Qm9cGRub0)               | Brené Brown / TEDx | Auto            | Medium |
+| Video | YouTube Link | Reference | Transcript Type | Length |
+|---|---|---|---|---|
+| The Danger of a Single Story | https://www.youtube.com/watch?v=D9Ihs241zeg | TED | Manual | Medium |
+| Your Body Language May Shape Who You Are | https://www.youtube.com/watch?v=Ks-_Mh1QhMc | TED | Manual | Medium |
+| The History of Our World in 18 Minutes | https://www.youtube.com/watch?v=yqc9zX04DXs | TED | Manual | Short |
+| The Power of Vulnerability | https://www.youtube.com/watch?v=X4Qm9cGRub0 | Brené Brown / TEDx | Auto | Medium |
 
 The benchmark is intentionally small at this stage. It is used to test the complete evaluation pipeline rather than to claim broad statistical performance.
 
