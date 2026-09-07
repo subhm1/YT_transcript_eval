@@ -6,6 +6,355 @@ Instead of sending an entire transcript to an LLM in one request, the system exp
 
 The project is intentionally framework-light and focuses on understanding and implementing the underlying system rather than hiding the pipeline behind an orchestration framework.
 
+BELOW explains HOW to run it LOCALLY in your machine , NEXT section is the artitechture.
+
+## Local Setup
+
+Follow the steps below to clone, install, configure, and run the complete project locally.
+
+### 1. Prerequisites
+
+Make sure the following are installed:
+
+- Git
+- Python 3.x
+- Node.js and npm
+- Ollama
+
+Verify the installations:
+
+```powershell
+git --version
+python --version
+node --version
+npm --version
+ollama --version
+````
+
+---
+
+### 2. Clone the Repository
+
+```powershell
+git clone https://github.com/subhm1/YT_transcript_eval.git
+cd YT_transcript_eval
+```
+
+---
+
+### 3. Backend Setup
+
+Create a Python virtual environment:
+
+```powershell
+python -m venv venv
+```
+
+Activate it:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+Install the Python dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Ollama Setup
+
+This project uses Ollama for local LLM inference.
+
+Pull the model used by the project:
+
+```powershell
+ollama pull qwen3:4b
+```
+
+Verify that the model is available:
+
+```powershell
+ollama list
+```
+
+You should see `qwen3:4b` in the list.
+
+Make sure Ollama is running before starting the backend.
+
+---
+
+### 5. Start the Backend
+
+From the project root:
+
+```powershell
+uvicorn api.main:app --reload
+```
+
+The FastAPI backend will run at:
+
+```text
+http://127.0.0.1:8000
+```
+
+FastAPI Swagger documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Keep this terminal running.
+
+---
+
+### 6. Frontend Setup
+
+Open a **new terminal**.
+
+Navigate to the frontend:
+
+```powershell
+cd YT_transcript_eval\frontend
+```
+
+Install the frontend dependencies:
+
+```powershell
+npm install
+```
+
+Start the Next.js development server:
+
+```powershell
+npm run dev
+```
+
+The frontend will run at:
+
+```text
+http://localhost:3000
+```
+
+Open this URL in your browser.
+
+---
+
+### 7. Running the Complete Application
+
+You should now have:
+
+**Terminal 1 — Backend**
+
+```powershell
+cd YT_transcript_eval
+.\venv\Scripts\Activate.ps1
+uvicorn api.main:app --reload
+```
+
+**Terminal 2 — Frontend**
+
+```powershell
+cd YT_transcript_eval\frontend
+npm run dev
+```
+
+**Ollama**
+
+Ollama must be running locally with:
+
+```text
+qwen3:4b
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
+Enter a YouTube URL and run the pipeline.
+
+---
+
+### 8. Running the Evaluation
+
+The benchmark dataset is located at:
+
+```text
+evaluation/dataset.csv
+```
+
+Run the benchmark:
+
+```powershell
+python -m evaluation.run_evaluation
+```
+
+Run the LLM-as-a-judge evaluation:
+
+```powershell
+python -m evaluation.run_judge
+```
+
+Analyze the results:
+
+```powershell
+python -m evaluation.analyze_results
+```
+
+Generated evaluation files are stored inside:
+
+```text
+evaluation/
+├── generated_results.csv
+└── judge_results.csv
+```
+
+---
+
+### 9. Running Tests
+
+From the project root:
+
+```powershell
+python -m pytest
+```
+
+Individual test scripts can also be run directly:
+
+```powershell
+python test_fetcher.py
+python test_tokenizer.py
+python test_reducer.py
+python test_pipeline.py
+```
+
+---
+
+### 10. Troubleshooting
+
+#### Ollama model not found
+
+```powershell
+ollama pull qwen3:4b
+```
+
+Then verify:
+
+```powershell
+ollama list
+```
+
+#### Ollama connection error
+
+Test the model directly:
+
+```powershell
+ollama run qwen3:4b
+```
+
+If the model responds, exit it and restart the FastAPI backend.
+
+#### Frontend cannot connect to backend
+
+Make sure the backend is running:
+
+```powershell
+uvicorn api.main:app --reload
+```
+
+Then check:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+#### PowerShell does not allow virtual environment activation
+
+Run:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+#### `npm` is not recognized
+
+Install Node.js and verify:
+
+```powershell
+node --version
+npm --version
+```
+
+#### `python` is not recognized
+
+Install Python and verify:
+
+```powershell
+python --version
+```
+
+---
+
+### 11. Local Architecture
+
+```text
+                    Browser
+                       │
+                       ▼
+              Next.js Frontend
+               localhost:3000
+                       │
+                       │ HTTP / Streaming
+                       ▼
+               FastAPI Backend
+               localhost:8000
+                       │
+                       ▼
+                Python Pipeline
+                       │
+                       ▼
+                Ollama / Qwen3
+                 Local LLM
+```
+
+The complete pipeline is:
+
+```text
+YouTube URL
+     ↓
+Transcript Fetching
+     ↓
+Normalization
+     ↓
+Token Counting
+     ↓
+Chunking
+     ↓
+Map Stage
+     ↓
+Reduce Stage
+     ↓
+Structured JSON Output
+     ↓
+Final Summary
+     ↓
+Benchmark / LLM-as-a-Judge
+```
+
+```
+```
+
+
 ## Architecture
 
 ```text
